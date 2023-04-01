@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/hdomin/jwtGo/authentication"
 	"net/http"
+
+	"jwtgo/authentication"
 )
 
 func main() {

@@ -1,17 +1,19 @@
 package authentication
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"jwtgo/models"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
-	"github.com/hdomin/jwtGo/models"
 )
 
 var (
@@ -20,32 +22,46 @@ var (
 )
 
 func init() {
-	privateBytes, err := ioutil.ReadFile("./keys/private.rsa")
+	filePrivate, err := os.Open("./keys/private.rsa")
+	if err != nil {
+		log.Fatal("No se encontró la llave privada")
+	}
+	defer filePrivate.Close()
+
+	privateBytes := new(bytes.Buffer)
+	_, err = io.Copy(privateBytes, filePrivate)
 
 	if err != nil {
 		log.Fatal("No se encontró la llave privada")
 	}
 
-	publicBytes, err := ioutil.ReadFile("./keys/public.rsa.pub")
+	filePublic, err := os.Open("./keys/public.rsa.pub")
+	if err != nil {
+		log.Fatal("No se encontró la llave privada")
+	}
+	defer filePublic.Close()
+
+	publicBytes := new(bytes.Buffer)
+	_, err = io.Copy(publicBytes, filePublic)
 
 	if err != nil {
-		log.Fatal("No se encontró la llave pública")
+		log.Fatal("No se encontró la llave privada")
 	}
 
-	privateKey, err = jwt.ParseRSAPrivateKeyFromPEM(privateBytes)
+	privateKey, err = jwt.ParseRSAPrivateKeyFromPEM(privateBytes.Bytes())
 
 	if err != nil {
 		log.Fatal("No se logró realizar el Parse a privateKey")
 	}
 
-	publicKey, err = jwt.ParseRSAPublicKeyFromPEM(publicBytes)
+	publicKey, err = jwt.ParseRSAPublicKeyFromPEM(publicBytes.Bytes())
 
 	if err != nil {
 		log.Fatal("No se logró realizar el Parse a publicKey")
 	}
 }
 
-//GenerateJWT : Función para generar el JWT
+// GenerateJWT : Función para generar el JWT
 func GenerateJWT(user models.User) string {
 	claims := models.Claim{
 		User: user,
@@ -65,14 +81,14 @@ func GenerateJWT(user models.User) string {
 	return result
 }
 
-//Login : Test Login
+// Login : Test Login
 func Login(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
-		fmt.Fprintln(w, "Error al leer el usuario %s", err)
+		fmt.Fprintln(w, "Error al leer el usuario %s", err.Error())
 		return
 	}
 
@@ -100,7 +116,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//ValidateToken : Validación del toketn
+// ValidateToken : Validación del toketn
 func ValidateToken(w http.ResponseWriter, r *http.Request) {
 	token, err := request.ParseFromRequestWithClaims(r, request.OAuth2Extractor, &models.Claim{}, func(token *jwt.Token) (interface{}, error) {
 		return publicKey, nil
