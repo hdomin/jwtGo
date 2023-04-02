@@ -13,6 +13,7 @@ func main() {
 
 	mux.HandleFunc("/login", authentication.Login)
 	mux.HandleFunc("/validate", authentication.ValidateToken)
+	mux.HandleFunc("/", authentication.Hello)
 
 	certFile := "./keys/cert.pem"
 	keyFile := "./keys/key.pem"

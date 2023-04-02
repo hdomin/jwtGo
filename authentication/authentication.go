@@ -151,3 +151,8 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "No tiene permisos")
 	}
 }
+
+// Hello : Test Hello
+func Hello(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hola mundo")
+}
